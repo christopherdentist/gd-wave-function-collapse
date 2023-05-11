@@ -16,7 +16,7 @@ const TileScenes = {
 	TileType.WATER_SHALLOW: preload("res://scenes/v2/tile/tile_water_shallow.tscn"),
 	TileType.WATER_DEEP: preload("res://scenes/v2/tile/tile_water_deep.tscn"),
 }
-const HOTSHOT_CHANCE = 0.1
+const HOTSHOT_CHANCE = 0.05
 
 
 func generate_random_grid(size_x: int, size_z: int):
@@ -165,6 +165,7 @@ func generate_neighbor_respecting_random_grid(dimensions: Vector3):
 
 class WaveFunctionCollapse:
 	var dimensions: Vector3
+	var bypass_entropy_factor: float
 	var NeighborMap := {
 		TileType.NONE: TileType.keys(),
 		TileType.DIRT: [TileType.DIRT, TileType.GRASS, TileType.SAND],
@@ -177,9 +178,10 @@ class WaveFunctionCollapse:
 	var superposition_grid: Grid3D
 	
 	
-	func _init(dimensions: Vector3):
+	func _init(dimensions: Vector3, bypass_entropy_factor: float = HOTSHOT_CHANCE):
 		assert(dimensions.y == 1, "Grid requires a Y size of exactly 1")
 		self.dimensions = dimensions
+		self.bypass_entropy_factor = bypass_entropy_factor
 		self.rng = RandomNumberGenerator.new()
 		superposition_grid = _get_new_grid()
 		_iter_init()
@@ -221,10 +223,11 @@ class WaveFunctionCollapse:
 						# We never want to touch fully-collapsed points
 						continue
 					var entropy: float = _get_tile_entropy(grid, coords)
-					if entropy == lowest_entropy or (rng.randf() < HOTSHOT_CHANCE):
+					var let_rng_decide: bool = rng.randf() <= bypass_entropy_factor
+					if entropy == lowest_entropy:
 						lowest_coords.push_back(coords)
-					elif entropy < lowest_entropy:
-						lowest_entropy = entropy
+					elif entropy < lowest_entropy or let_rng_decide:
+						lowest_entropy = entropy if not let_rng_decide else -1
 						lowest_coords = [coords]
 		return lowest_coords
 	
@@ -238,7 +241,6 @@ class WaveFunctionCollapse:
 		get:
 			if _next_type != null:
 				return _next_type
-			var lowest_entropy_points := _find_points_with_lowest_entropy(_iterating_grid)
 			_next_type = _get_collapsed_tile_type(_iterating_grid, _next_point)
 			return _next_type
 	var _next_point:
@@ -249,11 +251,6 @@ class WaveFunctionCollapse:
 			_next_point = lowest_entropy_points[
 				rng.randi_range(0, lowest_entropy_points.size() - 1)]
 			return _next_point
-	
-	
-	func begin_generating():
-		_iterating_grid = _get_new_grid()
-		
 	
 	
 	func has_next() -> bool:
@@ -276,24 +273,28 @@ class WaveFunctionCollapse:
 		return node
 	
 	
+	# Returns a node representing the next tile to be placed.
+	# Also updates internal variables to prepare for the next iteration.
 	func next() -> Node3D:
 		var grid = _iterating_grid
 		var next_point = _next_point
 		var next_type = _next_type
 		
 		# Collapse the point and update its neighbors
-		grid.set_value(next_point, [])
-		var valid_neighbors: Array = NeighborMap.get(next_type)
-		var all_neighbors = grid.get_value_neighbors(next_point)
-		for neighbor_index in range(all_neighbors.size()):
-			var neighbor_superposition: Array = all_neighbors[neighbor_index]
-			if neighbor_superposition.size() == 0:
-				# Don't try to update the superposition for super-collapsed neighbors
-				continue
-			for neighbor_type in neighbor_superposition.duplicate():
-				if neighbor_type not in valid_neighbors:
-					neighbor_superposition.erase(neighbor_type)
+		grid.set_value(next_point, [next_type]) # set to 1 value to propagate
+		_propagate_changes(grid, next_point)
+		grid.set_value(next_point, []) # and later set to [] to mark it as full collapsed
 		
+		# The below code is old, and replaced with the _propagate_changes method
+#		var valid_neighbors: Array = NeighborMap.get(next_type)
+#		var all_neighbors = grid.get_value_neighbors(next_point)
+#		for neighbor_superposition in all_neighbors:
+#			if neighbor_superposition.size() == 1:
+#				# Don't try to update the superposition for super-collapsed neighbors
+#				continue
+#			for neighbor_type in neighbor_superposition.duplicate():
+#				if neighbor_type not in valid_neighbors:
+#					neighbor_superposition.erase(neighbor_type)
 		var node = _iter_get()
 		
 		# Finally, prepare for the next iteration
@@ -301,6 +302,40 @@ class WaveFunctionCollapse:
 		_next_type = null
 		
 		return node
+	
+	
+	# Given a specific tile, update all neighboring superpositions.
+	# Recursively updates neighbors-of-neighbors too, up to a maximum of n_propagation_iterations
+	func _propagate_changes(grid: Grid3D, point: Vector3, n_propagation_iterations: int = 2):
+		if n_propagation_iterations <= 0:
+			# Recursive escape hatch
+			return
+		var current_superposition = grid.get_value(point) as Array[TileType]
+		
+		# For each type that the current point can be, build a list of all potential neighbor types
+		var append_with_valid_neighbors: Callable \
+			= func append_with_valid_neighbors(accumulator: Array[TileType], type: TileType):
+				accumulator.append_array(NeighborMap.get(type))
+				return accumulator
+		var acceptable_neighbor_types: Array[TileType] \
+			= current_superposition.reduce(append_with_valid_neighbors, [] as Array[TileType])
+		
+		# Get the <=6 adjacent neighbors and remove impossible types from their superposition
+		var all_neighbors = grid.get_neighboring_points(point) as Array[Vector3]
+		for neighbor in all_neighbors:
+			var is_changed := false
+			var neighbor_supertypes = grid.get_value(neighbor)
+			if neighbor_supertypes.size() == 1:
+				# This might be a problem, I'll have to revisit
+				continue
+			for neighbor_type in neighbor_supertypes.duplicate():
+				if neighbor_type not in acceptable_neighbor_types:
+					neighbor_supertypes.erase(neighbor_type)
+					is_changed = true
+			if is_changed:
+				# If we updated this neighbor's supertypes, propagate that change to its neighbors
+				_propagate_changes(grid, neighbor, n_propagation_iterations - 1)
+	
 	
 	func generate():
 		var grid = _get_new_grid()
@@ -446,23 +481,27 @@ class Grid3D:
 			or pos.z < 0 or pos.z >= dimensions.z:
 			return
 		grid[pos.x][pos.y][pos.z] = new_value
-
-
+	
+	
 	# Returns the <=6 adjacent neighbors to this tile, filtering out any null neighbors
 	func get_value_neighbors(pos: Vector3, include_nulls = false) -> Array:
+		return get_neighboring_points(pos, include_nulls) \
+			.map(func map_point_to_superposition(point): return get_value(point))
+	
+	# Returns the <=6 adjacent points relative to the passed point.
+	func get_neighboring_points(pos: Vector3, include_nulls = false) -> Array:
 		var neighbors = []
 		var x_offset = Vector3(1, 0, 0)
 		var y_offset = Vector3(0, 1, 0)
 		var z_offset = Vector3(0, 0, 1)
-		neighbors.push_back(get_value(pos + x_offset))
-		neighbors.push_back(get_value(pos - x_offset))
-		neighbors.push_back(get_value(pos + y_offset))
-		neighbors.push_back(get_value(pos - y_offset))
-		neighbors.push_back(get_value(pos + z_offset))
-		neighbors.push_back(get_value(pos - z_offset))
-		return neighbors.filter(func filter_nulls(val): return val != null) \
-			if not include_nulls \
-			else neighbors
+		neighbors.push_back(pos + x_offset)
+		neighbors.push_back(pos - x_offset)
+		neighbors.push_back(pos + y_offset)
+		neighbors.push_back(pos - y_offset)
+		neighbors.push_back(pos + z_offset)
+		neighbors.push_back(pos - z_offset)
+		return neighbors if include_nulls \
+			else neighbors.filter(func keep_in_bounds(point): return get_value(point) != null)
 
 	# Returns a 1D list of all values. Order is not guaranteed.
 	func get_all_values() -> Array:

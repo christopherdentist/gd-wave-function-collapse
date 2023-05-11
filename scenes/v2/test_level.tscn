@@ -5,10 +5,8 @@
 
 [node name="TestLevel" type="Node3D"]
 script = ExtResource("1_b1oei")
-size_x = 50
-size_z = 50
-show_labels = null
-paused = null
+size_x = 25
+size_z = 25
 
 [node name="TilePlacementTimer" type="Timer" parent="."]
 wait_time = 0.05
@@ -17,6 +15,7 @@ wait_time = 0.05
 transform = Transform3D(0.931069, -0.30821, 0.195235, 0, 0.535121, 0.844776, -0.364843, -0.786545, 0.498235, 1.44596, 6.25665, 3.69007)
 
 [node name="Player" parent="." instance=ExtResource("2_jcjbp")]
+transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, 0, 2.47805, 0)
 no_clip = true
 
 [connection signal="timeout" from="TilePlacementTimer" to="." method="_on_tile_placement_timer_timeout"]

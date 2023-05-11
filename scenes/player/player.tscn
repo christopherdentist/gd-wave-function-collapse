@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://i0d0k58jf8c2"]
 
-[ext_resource type="Texture2D" uid="uid://2uhhb2a6i7t2" path="res://scenes/player/anim_idle_1.svg" id="1_4g5mk"]
 [ext_resource type="Script" path="res://scenes/player/player.gd" id="1_wmywk"]
+[ext_resource type="Texture2D" uid="uid://bcgj1oa03g74y" path="res://scenes/player/player.svg" id="2_rifkw"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_rqqnl"]
 radius = 0.255009
@@ -27,11 +27,11 @@ disabled = true
 
 [node name="Body" type="Sprite3D" parent="."]
 transform = Transform3D(0.4, 0, 0, 0, 0.6, 0, 0, 0, 1, 0, -0.2, 0)
-texture = ExtResource("1_4g5mk")
+texture = ExtResource("2_rifkw")
 
 [node name="Head" type="Sprite3D" parent="."]
 transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0.312765, 0)
-texture = ExtResource("1_4g5mk")
+texture = ExtResource("2_rifkw")
 
 [node name="CameraFPS" type="Camera3D" parent="Head"]
 transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, 0, 0, 0)

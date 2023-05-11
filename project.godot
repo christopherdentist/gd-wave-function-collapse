@@ -13,7 +13,7 @@ config_version=5
 config/name="2023-05-WaveFunctionCollapse"
 run/main_scene="res://scenes/v2/test_level.tscn"
 config/features=PackedStringArray("4.0", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://sample_generation.png"
 
 [autoload]
 
