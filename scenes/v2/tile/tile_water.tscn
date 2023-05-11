@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://cj00ah6pihkja"]
+
+[ext_resource type="PackedScene" uid="uid://dt4eqb15sw6uj" path="res://scenes/v2/tile/tile_cube.tscn" id="1_exevp"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qjyd1"]
+size = Vector3(1, 0.2, 1)
+
+[node name="Water" instance=ExtResource("1_exevp")]
+
+[node name="CollisionNode" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 0)
+shape = SubResource("BoxShape3D_qjyd1")
+
+[node name="CSGBox3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+size = Vector3(1, 0.8, 1)

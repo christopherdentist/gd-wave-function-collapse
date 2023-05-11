@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://bqe31ro52ql8j"]
+
+[ext_resource type="PackedScene" uid="uid://dt4eqb15sw6uj" path="res://scenes/v2/tile/tile_cube.tscn" id="1_0idld"]
+[ext_resource type="Material" uid="uid://5vso50l20b8p" path="res://scenes/v2/tile/tile_grass.tres" id="2_i4jfg"]
+
+[node name="TileGrass" instance=ExtResource("1_0idld")]
+
+[node name="CSGBox3D" parent="." index="1"]
+material = ExtResource("2_i4jfg")

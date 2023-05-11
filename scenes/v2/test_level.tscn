@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://cvmjjyqww50b7"]
+
+[ext_resource type="Script" path="res://scenes/v2/test_level.gd" id="1_b1oei"]
+[ext_resource type="PackedScene" uid="uid://i0d0k58jf8c2" path="res://scenes/player/player.tscn" id="2_jcjbp"]
+
+[node name="TestLevel" type="Node3D"]
+script = ExtResource("1_b1oei")
+size_x = 50
+size_z = 50
+show_labels = null
+paused = null
+
+[node name="TilePlacementTimer" type="Timer" parent="."]
+wait_time = 0.05
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.931069, -0.30821, 0.195235, 0, 0.535121, 0.844776, -0.364843, -0.786545, 0.498235, 1.44596, 6.25665, 3.69007)
+
+[node name="Player" parent="." instance=ExtResource("2_jcjbp")]
+no_clip = true
+
+[connection signal="timeout" from="TilePlacementTimer" to="." method="_on_tile_placement_timer_timeout"]

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://hw31myhhe6lv"]
+
+[ext_resource type="PackedScene" uid="uid://cj00ah6pihkja" path="res://scenes/v2/tile/tile_water.tscn" id="1_jvuc5"]
+[ext_resource type="Material" uid="uid://dgngty8j0res1" path="res://scenes/v2/tile/tile_water_deep.tres" id="2_s8qb6"]
+
+[node name="WaterDeep" instance=ExtResource("1_jvuc5")]
+
+[node name="CSGBox3D" parent="." index="1"]
+material = ExtResource("2_s8qb6")

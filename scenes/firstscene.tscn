@@ -1,0 +1,52 @@
+[gd_scene load_steps=7 format=3 uid="uid://doffwq8vjxqn2"]
+
+[ext_resource type="Texture2D" uid="uid://dw4n5rni0himt" path="res://icon.svg" id="1_e460n"]
+[ext_resource type="PackedScene" uid="uid://i0d0k58jf8c2" path="res://scenes/player/player.tscn" id="2_b1nuy"]
+[ext_resource type="PackedScene" uid="uid://dqcjnht51giyi" path="res://scenes/map/generated_map.tscn" id="3_qmskk"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jeotl"]
+size = Vector3(1.26758, 1, 1.26775)
+
+[sub_resource type="Environment" id="Environment_6d5sh"]
+ambient_light_sky_contribution = 0.1
+fog_enabled = true
+fog_light_color = Color(0.0941176, 0.0392157, 0.2, 1)
+fog_density = 0.02
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rdded"]
+
+[node name="Main" type="Node3D"]
+
+[node name="Floor" type="StaticBody3D" parent="."]
+transform = Transform3D(25, 0, 0, 0, 25, 0, 0, 0, 25, 0, 0, 0)
+visible = false
+collision_layer = 2
+collision_mask = 0
+metadata/_edit_group_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_jeotl")
+
+[node name="Sprite3D" type="Sprite3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+modulate = Color(0.266667, 0.266667, 0.266667, 1)
+texture = ExtResource("1_e460n")
+
+[node name="Player" parent="." instance=ExtResource("2_b1nuy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.66482, 0)
+collision_layer = 3
+
+[node name="GeneratedMap" parent="." instance=ExtResource("3_qmskk")]
+generate = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_6d5sh")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 18.6651, 0)
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0)
+flip_faces = true
+material = SubResource("StandardMaterial3D_rdded")
